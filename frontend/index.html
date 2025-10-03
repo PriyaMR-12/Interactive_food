@@ -114,6 +114,46 @@
         </div>
     </div>
 
+    <script src="auth.js"></script>
+    <script>
+        // Protect page: redirect to login if not authenticated
+        document.addEventListener('DOMContentLoaded', function(){
+            if (!window.Auth || !window.Auth.isAuthenticated()) {
+                window.location.href = 'login.html';
+                return;
+            }
+            
+            // Add user info and logout button to header
+            const user = window.Auth.currentUser();
+            if (user) {
+                const header = document.querySelector('.header-content');
+                if (header) {
+                    const userInfo = document.createElement('div');
+                    userInfo.style.marginTop = '15px';
+                    userInfo.style.textAlign = 'center';
+                    userInfo.innerHTML = `
+                        <div style="background: rgba(255,255,255,0.1); padding: 10px 20px; border-radius: 25px; display: inline-block; margin-bottom: 10px;">
+                            <span style="font-size: 0.9rem; opacity: 0.9;">
+                                <i class="fas fa-user"></i> Welcome, <strong>${user.name}</strong>
+                            </span>
+                        </div>
+                        <div>
+                            <button id="logoutBtn" style="background: #ff6fae; color: white; border: none; border-radius: 20px; padding: 8px 16px; cursor: pointer; font-size: 0.9rem; transition: all 0.3s ease;">
+                                <i class="fas fa-sign-out-alt"></i> Logout
+                            </button>
+                        </div>
+                    `;
+                    header.appendChild(userInfo);
+                    
+                    // Add logout functionality
+                    document.getElementById('logoutBtn').addEventListener('click', function(){
+                        window.Auth.logout();
+                        window.location.href = 'login.html';
+                    });
+                }
+            }
+        });
+    </script>
     <script src="script.js"></script>
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
