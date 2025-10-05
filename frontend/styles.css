@@ -22,31 +22,125 @@ body {
     flex-direction: column;
 }
 
-/* Navbar (Consistent Style) */
+/* ===== Navbar Base ===== */
 .navbar {
-    background: rgba(30, 30, 46, 0.95) !important;
-    backdrop-filter: blur(10px);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    box-shadow: 0 2px 20px rgba(0, 0, 0, 0.2);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 30px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.15);
 }
 
-.navbar-brand {
-    color: #00d4ff !important; /* Teal accent */
-    font-weight: 700;
+.logo a {
     font-size: 1.5rem;
+    font-weight: 700;
+    color: white;
+    text-decoration: none;
+    letter-spacing: 1px;
 }
 
-.navbar-brand i {
-    color: #ff9500; /* Orange accent for icons */
+.nav-links {
+    list-style: none;
+    display: flex;
+    align-items: center;
+    gap: 25px;
+    margin: 0;
+    padding: 0;
 }
 
-.nav-link {
-    color: #e0e0e0 !important;
-    transition: color 0.3s ease;
+.nav-links .nav-item a,
+.nav-links .dropdown-toggle {
+    color: white;
+    text-decoration: none;
+    font-size: 1rem;
+    font-weight: 500;
+    transition: opacity 0.25s ease;
 }
 
-.nav-link:hover {
-    color: #00d4ff !important;
+.nav-links .nav-item a:hover,
+.nav-links .dropdown-toggle:hover {
+    opacity: 0.75;
+}
+
+/* ===== Dropdown ===== */
+.dropdown {
+    position: relative;
+}
+
+.dropdown-menu {
+    position: absolute;
+    top: 110%;
+    right: 0;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.15);
+    padding: 10px 0;
+    min-width: 180px;
+    display: none;
+    z-index: 10;
+}
+
+.dropdown-menu li {
+    list-style: none;
+    padding: 8px 20px;
+}
+
+.dropdown-menu li a {
+    color: #333;
+    text-decoration: none;
+    font-size: 0.95rem;
+    display: block;
+}
+
+.dropdown-menu li a:hover {
+    background: #f3f3f3;
+    border-radius: 4px;
+}
+
+.dropdown:hover .dropdown-menu {
+    display: block;
+}
+
+/* Email at top of dropdown */
+#dropdownEmail {
+    font-size: 0.85rem;
+    padding: 0 20px 8px;
+    margin-bottom: 5px;
+    border-bottom: 1px solid #eee;
+    color: #666;
+    display: block;
+}
+
+/* Make sure Login button looks consistent */
+#loginNavItem a {
+    color: black;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-weight: 600;
+    transition: background 0.25s ease, color 0.25s ease;
+}
+
+#loginNavItem a,
+#signupNavItem a {
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-weight: 600;
+    transition: background 0.25s ease, color 0.25s ease;
+    text-decoration: none;
+    cursor: pointer;
+    color: black;
+}
+
+#signupNavItem a {
+    margin-left: 8px;
+}
+
+#loginNavItem a:hover,
+#signupNavItem a:hover {
+    color: black;
+    text-decoration: none;
+    cursor: pointer;
+
 }
 
 .dropdown-menu {
@@ -446,23 +540,86 @@ body {
     min-height: 48px;
 }
 
-.view-recipe-btn {
-    width: 100%;
-    background: linear-gradient(135deg, #00d4ff 0%, #ff9500 100%);
-    color: white;
-    border: none;
-    border-radius: 25px;
-    padding: 10px 20px;
+#recipeModal {
+       display: none; /* Hidden by default */
+       position: fixed;
+       z-index: 1050;
+}
+#recipesGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(800px, 2fr));
+    gap: 10px;
+    padding: 5px;
+}
+.recipe-card {
+    background-color: #1e1e1e;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
     cursor: pointer;
+    transition: transform 0.2s ease;
+    height: 100%; /* Make cards equal height */
+}
+
+.recipe-card:hover {
+    transform: translateY(-5px);
+}
+
+.recipe-image img {
+    width: 100%;
+    height: 180px;
+    object-fit: cover;
+    border-top-left-radius: 12px;
+    border-top-right-radius: 12px;
+}
+
+.recipe-content {
+    padding: 15px;
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.recipe-title {
+    font-size: 1.2rem;
+    margin-bottom: 8px;
+    color: #fff;
+}
+
+.recipe-info {
+    display: flex;
+    justify-content: space-between;
     font-size: 0.9rem;
-    font-weight: 500;
-    transition: all 0.3s ease;
+    color: #ccc;
+    margin-bottom: 10px;
+}
+
+.recipe-description {
+    flex-grow: 1;
+    font-size: 0.95rem;
+    color: #aaa;
+    margin-bottom: 10px;
+}
+
+.view-recipe-btn {
+    align-self: flex-start;
+    background: linear-gradient(135deg, #00d4ff 0%, #ff9500 100%);
+    border: none;
+    color: white;
+    padding: 8px 16px;
+    border-radius: 25px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.3s ease;
 }
 
 .view-recipe-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(0, 212, 255, 0.3);
+    background: linear-gradient(135deg, #ff9500 0%, #00d4ff 100%);
 }
+
+
 
 /* Error/Success Messages (Unified for Auth Pages and Modals) */
 .error-msg, .success-msg {
