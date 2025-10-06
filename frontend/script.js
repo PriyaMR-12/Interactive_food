@@ -250,14 +250,15 @@ function createRecipeCard(recipe) {
                     <span class="difficulty"><i class="fas fa-signal"></i> ${difficulty}</span>
                 </div>
                 <p class="recipe-description">${description}</p>
-                <button class="view-recipe-btn" onclick="openRecipeInNewTab(${recipe.id})">View Recipe</button>
+                <button class="view-recipe-btn" onclick="openRecipeDetails(${recipe.id})">View Recipe</button>
             </div>
         </div>
     `;
 }
 
-function openRecipeInNewTab(recipeId) {
-    window.open(`https://spoonacular.com/recipes/${recipeId}`, '_blank');
+function openRecipeDetails(recipeId) {
+    localStorage.setItem('selectedRecipeId', recipeId);
+    window.location.href = 'recipe-details.html';
 }
 
 // Get difficulty level based on cooking time

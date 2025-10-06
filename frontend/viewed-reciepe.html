@@ -28,14 +28,15 @@
             </button>
             <div class="collapse navbar-collapse" id="navContent">
                 <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
+                    
+                    <li class="nav-item">
+                        <a class="nav-link" href="index.html"><i class="fas fa-home"></i> Home</a>
+                    </li>
                     <li class="nav-item" id="loginNavItem">
                         <a href="login.html">Sign In</a>
                     </li>
                     <li class="nav-item" id="signupNavItem">
                         <a href="signup.html">Sign Up</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="index.html"><i class="fas fa-home"></i> Home</a>
                     </li>
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" id="profileDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
@@ -229,26 +230,35 @@
         }
         // Create card for viewed recipe (similar to createRecipeCard but with timestamp)
         function createViewedRecipeCard(recipe) {
-            const timestamp = new Date(recipe.viewedAt).toLocaleDateString();
-            const srcCandidates = [recipe.image].filter(Boolean).join('|');
-            return `
-                <div class="recipe-card" onclick="openRecipeModal(${recipe.id})">
-                    <div class="recipe-image">
-                        <img data-load-src="${srcCandidates}" src="https://via.placeholder.com/300x200?text=${encodeURIComponent(recipe.title)}" alt="${recipe.title}" loading="lazy">
-                    </div>
-                    <div class="recipe-content">
-                        <h3 class="recipe-title">${recipe.title}</h3>
-                        <div class="recipe-info">
-                            <span class="time"><i class="fas fa-clock"></i> ${recipe.readyInMinutes || 'N/A'} min</span>
-                            <span class="servings"><i class="fas fa-users"></i> ${recipe.servings || 'N/A'} servings</span>
-                            <span class="viewed-at"><i class="fas fa-calendar"></i> Viewed: ${timestamp}</span>
-                        </div>
-                        <p class="recipe-description">${recipe.summary ? recipe.summary.replace(/<[^>]*>/g, '').substring(0, 100) + '...' : 'Recipe details.'}</p>
-                        <button class="view-recipe-btn">View Details</button>
-                    </div>
+    const timestamp = new Date(recipe.viewedAt).toLocaleDateString();
+    const srcCandidates = [recipe.image].filter(Boolean).join('|');
+    return `
+        <div class="recipe-card">
+            <div class="recipe-image">
+                <img data-load-src="${srcCandidates}" src="https://via.placeholder.com/300x200?text=${encodeURIComponent(recipe.title)}" alt="${recipe.title}" loading="lazy">
+            </div>
+            <div class="recipe-content">
+                <h3 class="recipe-title">${recipe.title}</h3>
+                <div class="recipe-info">
+                    <span class="time"><i class="fas fa-clock"></i> ${recipe.readyInMinutes || 'N/A'} min</span>
+                    <span class="servings"><i class="fas fa-users"></i> ${recipe.servings || 'N/A'} servings</span>
+                    <span class="viewed-at"><i class="fas fa-calendar"></i> Viewed: ${timestamp}</span>
                 </div>
-            `;
-        }
+                <p class="recipe-description">
+                    ${
+                        recipe.summary
+                            ? recipe.summary.replace(/<[^>]*>/g, '').substring(0, 100) + '...'
+                            : 'Recipe details.'
+                    }
+                </p>
+                <button class="view-recipe-btn" onclick="openRecipeDetails(${recipe.id})">
+                    View Details
+                </button>
+            </div>
+        </div>
+    `;
+}
+
         // Clear viewed history
         function clearViewedHistory() {
             if (confirm('Clear all viewed recipes history?')) {
