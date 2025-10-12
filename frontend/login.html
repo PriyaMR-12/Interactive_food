@@ -109,7 +109,7 @@
             <p class="auth-subtitle">Sign in to continue to Recipe Finder</p>
             <div id="loginSuccess" class="success-msg"></div>
             <div id="loginError" class="error-msg"></div>
-            <form id="loginForm">
+            <form onsubmit="loginUser(event)">
                 <div class="form-group">
                     <label for="email">Email</label>
                     <input id="email" type="email" class="form-control" placeholder="Enter your email" autocomplete="email" required>
@@ -130,70 +130,36 @@
 
     <script src="auth.js"></script>
     <script>
-        document.addEventListener('DOMContentLoaded', function(){
-            const form = document.getElementById('loginForm');
-            const errorBox = document.getElementById('loginError');
-            const successBox = document.getElementById('loginSuccess');
-            
-            // Show success message if redirected from signup
-            if (new URLSearchParams(location.search).get('new')) {
-                showSuccess('Account created successfully! Please sign in.');
-            }
-            
-            form.addEventListener('submit', async function(e){
-                e.preventDefault();
-                hideMessages();
-                
-                const email = document.getElementById('email').value.trim().toLowerCase();
-                const password = document.getElementById('password').value;
-                
-                // Validation
-                if (!email || !password) {
-                    showError('Please fill in all fields.');
-                    return;
-                }
-                
-                if (!isValidEmail(email)) {
-                    showError('Please enter a valid email address.');
-                    return;
-                }
-                
-                // Attempt login (async)
-                try {
-                    const result = await window.Auth.login({ email, password });
-                    if (result && result.success) {
-                        showSuccess('Signing in...');
-                        setTimeout(() => {
-                            window.location.href = 'index.html';
-                        }, 800);
-                    } else {
-                        showError((result && result.message) || 'Invalid email or password.');
-                    }
-                } catch (err) {
-                    showError(err && err.message ? err.message : 'Invalid email or password.');
-                }
+        async function loginUser(event) {
+          event.preventDefault();
+        
+          const email = document.getElementById("email").value;
+          const password = document.getElementById("password").value;
+        
+          try {
+            const res = await fetch("http://localhost:4000/api/auth/login", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({ email, password }),
             });
-            
-            function showError(message) {
-                errorBox.textContent = message;
-                errorBox.style.display = 'block';
+        
+            const data = await res.json();
+        
+            if (res.ok) {
+              localStorage.setItem("token", data.token);
+              alert("Login successful!");
+              window.location.href = "index.html";
+            } else {
+              alert(data.message || "Login failed");
             }
-            
-            function showSuccess(message) {
-                successBox.textContent = message;
-                successBox.style.display = 'block';
-            }
-            
-            function hideMessages() {
-                errorBox.style.display = 'none';
-                successBox.style.display = 'none';
-            }
-            
-            function isValidEmail(email) {
-                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-                return emailRegex.test(email);
-            }
-        });
-    </script>
+          } catch (error) {
+            alert("Server not reachable. Make sure backend is running.");
+          }
+        }
+        </script>
+        
+        
 </body>
 </html>

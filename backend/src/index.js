@@ -1,51 +1,54 @@
-import express from 'express';
-import cors from 'cors';
-import helmet from 'helmet';
-import morgan from 'morgan';
-import dotenv from 'dotenv';
-import mongoose from 'mongoose';
-import authRouter from './routes/auth.js';
+import express from "express";
+import dotenv from "dotenv";
+import cors from "cors";
+import helmet from "helmet";
+import mongoose from "mongoose";
 
 dotenv.config();
-
 const app = express();
-const PORT = process.env.PORT || 4000;
-const DEFAULT_ORIGINS = ['http://localhost:5500', 'http://127.0.0.1:5500'];
-const CLIENT_ORIGIN = process.env.CLIENT_ORIGIN || DEFAULT_ORIGINS.join(',');
-const ALLOWED_ORIGINS = Array.from(new Set([...DEFAULT_ORIGINS, ...CLIENT_ORIGIN.split(',').map(o => o.trim()).filter(Boolean)]));
 
+// ✅ Security Middleware
 app.use(helmet());
 
-const corsOptions = {
-  origin: function(origin, callback) {
-    if (!origin) return callback(null, true);
-    if (ALLOWED_ORIGINS.includes(origin)) return callback(null, true);
-    return callback(new Error('Not allowed by CORS'));
-  },
-  credentials: true
-};
+// ✅ CORS MUST COME BEFORE ROUTES
+app.use(
+  cors({
+    origin: ["http://localhost:5500", "http://127.0.0.1:5500"],
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+    credentials: true,
+  })
+);
 
-app.options('*', cors(corsOptions));
-app.use(cors(corsOptions));
-app.use(express.json());
-app.use(morgan('dev'));
+// ✅ Handle preflight requests
+app.options("*", cors());
 
-app.get('/health', (req, res) => {
-  res.json({ ok: true });
+// ✅ Body parsing must come before routes
+app.use(express.json({ limit: "10mb" }));
+app.use(express.urlencoded({ extended: true }));
+
+// ✅ Connect DB
+import connectDB from "../config/db.js";
+connectDB();
+
+// ✅ Load routes *after CORS + JSON parsing*
+import authRoutes from "./routes/authRoutes.js";
+app.use("/api/auth", authRoutes);
+
+import favoriteRoutes from "./routes/favoriteRoutes.js";
+app.use("/api/favorites", favoriteRoutes);
+
+import viewedRoutes from "./routes/viewedRoutes.js";
+app.use("/api/viewed", viewedRoutes);
+
+import customRecipeRoutes from "./routes/customRecipeRoutes.js";
+app.use("/api/custom-recipes", customRecipeRoutes);
+
+// ✅ Test route
+app.get("/", (req, res) => {
+  res.send("Backend is running securely");
 });
 
-app.use('/api/auth', authRouter);
-
-async function start() {
-  const uri = process.env.MONGODB_URI || 'mongodb://localhost:27017/recipe_finder';
-  await mongoose.connect(uri);
-  console.log('MongoDB connected');
-  app.listen(PORT, () => console.log(`API listening on http://localhost:${PORT}`));
-}
-
-start().catch((err) => {
-  console.error('Failed to start server', err);
-  process.exit(1);
-});
-
-
+// ✅ Start Server
+const PORT = process.env.PORT || 4000;
+app.listen(PORT, () => console.log(`✅ Server running on port ${PORT}`));

@@ -22,15 +22,31 @@
         return { success: true };
     }
 
-    async function login({ email, password }) {
-        const data = await api('/api/auth/login', 'POST', { email, password });
-        if (!data || !data.token || !data.user) {
-            throw new Error('Invalid response from server');
+    async function loginUser(event) {
+        event.preventDefault();
+      
+        const email = document.getElementById("email").value;
+        const password = document.getElementById("password").value;
+      
+        const res = await fetch("http://localhost:4000/auth/login", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ email, password }),
+        });
+      
+        const data = await res.json();
+      
+        if (res.ok) {
+          localStorage.setItem("token", data.token);
+          alert("Login successful!");
+          window.location.href = "index.html";
+        } else {
+          alert(data.message || "Login failed");
         }
-        localStorage.setItem(TOKEN_KEY, data.token);
-        localStorage.setItem(SESSION_KEY, JSON.stringify({ id: data.user.id, name: data.user.name, email: data.user.email }));
-        return { success: true };
-    }
+      }
+      
 
     function logout() {
         localStorage.removeItem(TOKEN_KEY);
@@ -54,5 +70,6 @@
         return true;
     }
 
-    global.Auth = { signup, login, logout, currentUser, isAuthenticated, requireAuth };
+    global.Auth = { signup, loginUser, logout, currentUser, isAuthenticated, requireAuth };
+
 })(window);

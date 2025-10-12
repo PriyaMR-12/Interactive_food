@@ -2,6 +2,17 @@
 const SPOONACULAR_API_KEY = 'b9b1f35fc51a4ae18bda8dcd74bf3cbc'; // Replace with your actual API key
 const SPOONACULAR_BASE_URL = 'https://api.spoonacular.com/recipes';
 
+// Backend Base URL
+const API_BASE = "http://localhost:5000";
+
+// Simple Auth Handler (Replace later with real login logic)
+window.Auth = {
+  isAuthenticated: () => !!localStorage.getItem("token"),
+  currentUser: () => {
+    const email = localStorage.getItem("userEmail");
+    return email ? { email } : null;
+  }
+};
 
 // Global state
 let selectedIngredients = [];
@@ -21,6 +32,7 @@ const retryBtn = document.getElementById('retryBtn');
 const recipeModal = document.getElementById('recipeModal');
 const closeModal = document.getElementById('closeModal');
 const nameEl = document.getElementById('navUserName');
+
 
 // Initialize the app
 document.addEventListener('DOMContentLoaded', function() {
@@ -224,43 +236,120 @@ function displayRecipes(recipes) {
 
 // Create a recipe card element
 function createRecipeCard(recipe) {
-    const srcCandidates = [
-        recipe.image,
-        `https://spoonacular.com/recipeImages/${recipe.id}-556x370.jpg`,
-        `https://spoonacular.com/recipeImages/${recipe.id}-312x231.jpg`
-    ].filter(Boolean).join('|');
-    const title = recipe.title || 'Untitled Recipe';
-    const readyInMinutes = recipe.readyInMinutes || 'N/A';
-    const servings = recipe.servings || 'N/A';
-    const difficulty = getDifficultyLevel(recipe.readyInMinutes);
-    const description = recipe.summary ? 
-        (recipe.summary.replace(/<[^>]*>/g, '').substring(0, 150) + '...') : 
-        'A delicious recipe you can make with your ingredients.';
-    
     return `
         <div class="recipe-card">
-            <div class="recipe-image">
-                <img data-load-src="${srcCandidates}" src="https://via.placeholder.com/300x200?text=No+Image" alt="${title}" loading="lazy">
-            </div>
-            <div class="recipe-content">
-                <h3 class="recipe-title">${title}</h3>
-                <div class="recipe-info">
-                    <span class="time"><i class="fas fa-clock"></i> ${readyInMinutes} min</span>
-                    <span class="servings"><i class="fas fa-users"></i> ${servings} servings</span>
-                    <span class="difficulty"><i class="fas fa-signal"></i> ${difficulty}</span>
-                </div>
-                <p class="recipe-description">${description}</p>
-                <button class="view-recipe-btn" onclick="openRecipeDetails(${recipe.id})">View Recipe</button>
-            </div>
+            <img src="${recipe.image}" alt="${recipe.title}" class="recipe-img">
+            <h3 class="recipe-title">${recipe.title}</h3>
+            <button class="view-btn" onclick="openRecipeModal(${recipe.id})">View Recipe</button>
+            <button class="fav-btn" onclick="saveFavorite(${recipe.id}, '${recipe.title}', '${recipe.image}')">❤️ Save</button>
         </div>
     `;
+
+
 }
 
-function openRecipeDetails(recipeId) {
-    localStorage.setItem('selectedRecipeId', recipeId);
-    window.location.href = 'recipe-details.html';
+function saveFavorite(id, title, image) {
+    const user = window.Auth?.currentUser();
+    if (!user || !user.email) {
+        alert("Please log in to save recipes.");
+        return;
+    }
+
+    fetch("http://localhost:4000/api/favorites", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            userEmail: user.email,
+            recipeId: id,
+            title,
+            image
+        })
+    })
+    .then(res => res.json())
+    .then(data => alert("Recipe added to favorites!"))
+    .catch(err => console.error("Error saving favorite:", err));
 }
 
+window.saveFavorite = saveFavorite;
+
+
+// Add this to script.js
+function saveViewedRecipe(recipe) {
+    const email = localStorage.getItem("userEmail");
+    if (!email) return;
+    
+  
+    const viewedData = {
+      userEmail: user.email,
+      recipeId: recipe.id,
+      title: recipe.title,
+      image: recipe.image,
+      summary: recipe.summary,
+      readyInMinutes: recipe.readyInMinutes,
+      servings: recipe.servings
+    };
+  
+    fetch("http://localhost:4000/api/viewed", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(viewedData)
+    })
+      .then(res => res.json())
+      .then(data => console.log("Saved viewed recipe:", data))
+      .catch(err => console.error("Failed to save viewed recipe:", err));
+  }
+  
+// Unified openRecipeModal that accepts either a recipe object OR a recipeId
+// ✅ Updated openRecipeModal() for full recipe details
+async function openRecipeModal(recipeId) {
+    try {
+        const apiKey = "b9b1f35fc51a4ae18bda8dcd74bf3cbc";
+        const response = await fetch(`https://api.spoonacular.com/recipes/${recipeId}/information?apiKey=${apiKey}`);
+        const data = await response.json();
+
+        if (!data || !data.extendedIngredients) {
+            showError("Recipe details not available. Try searching again.");
+            return;
+        }
+
+        // Populate modal fields
+        document.getElementById('modalTitle').textContent = data.title;
+        document.getElementById('modalImage').src = data.image;
+        document.getElementById('modalTime').textContent = data.readyInMinutes || 'N/A';
+        document.getElementById('modalServings').textContent = data.servings || 'N/A';
+        document.getElementById('modalDifficulty').textContent = data.veryPopular ? 'Popular' : 'Normal';
+
+        // Ingredients
+        const ingredientsList = data.extendedIngredients
+            .map(ing => `<li>${ing.original}</li>`)
+            .join('');
+        document.getElementById('modalIngredients').innerHTML = ingredientsList;
+
+        // Instructions
+        const instructionsList = data.analyzedInstructions[0]?.steps
+            ?.map(step => `<li>${step.step}</li>`)
+            .join('') || '<li>No instructions available.</li>';
+        document.getElementById('modalInstructions').innerHTML = instructionsList;
+
+        // Show modal
+        const recipeModal = document.getElementById('recipeModal');
+        recipeModal.style.display = 'block';
+document.body.style.overflow = 'hidden';
+
+    } catch (error) {
+        console.error('Error fetching recipe details:', error);
+        showError('Failed to load recipe details.');
+    }
+}
+
+// Close modal logic
+document.getElementById('closeModal').addEventListener('click', () => {
+    document.getElementById('recipeModal').style.display = 'none';
+});
+
+  
+  
+  
 // Get difficulty level based on cooking time
 function getDifficultyLevel(readyInMinutes) {
     if (readyInMinutes <= 30) return 'Easy';
@@ -269,108 +358,48 @@ function getDifficultyLevel(readyInMinutes) {
 }
 
 // Track viewed recipe
-function trackViewedRecipe(recipe) {
-    if (!window.Auth || !window.Auth.isAuthenticated()) return; // Only for logged-in users
-    const user = window.Auth.currentUser ();
+async function trackViewedRecipe(recipe) {
+    if (!window.Auth || !window.Auth.isAuthenticated()) return;
+    const user = window.Auth.currentUser();
     if (!user || !user.email) return;
-    
-    const viewedKey = `rf_viewed_${user.email}`;
-    let viewed = JSON.parse(localStorage.getItem(viewedKey) || '[]');
-    
-    // Add current recipe with timestamp (avoid duplicates by ID)
-    const existingIndex = viewed.findIndex(r => r.id === recipe.id);
-    const viewedEntry = {
-        ...recipe, // Full recipe data (title, image, ingredients, etc.)
-        viewedAt: Date.now() // Timestamp for sorting
+
+    const viewedData = {
+        userEmail: user.email,
+        recipeId: recipe.id,
+        title: recipe.title,
+        image: recipe.image,
+        viewedAt: Date.now()
     };
-    
-    if (existingIndex > -1) {
-        // Update existing entry with new timestamp (move to top)
-        viewed[existingIndex] = viewedEntry;
-        // Reorder to move to top
-        viewed = [viewedEntry, ...viewed.filter(r => r.id !== recipe.id)];
-    } else {
-        // Add new entry
-        viewed.unshift(viewedEntry); // Add to beginning for most recent first
-        // Limit to last 20 viewed recipes
-        if (viewed.length > 20) {
-            viewed = viewed.slice(0, 20);
-        }
+
+    try {
+        const response = await fetch("http://localhost:4000/api/viewed", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(viewedData)
+        });
+
+        const data = await response.json();
+        console.log("✅ Viewed recipe saved to backend:", data);
+    } catch (error) {
+        console.error("❌ Failed to save viewed recipe:", error);
     }
-    
-    // Save back to storage
-    localStorage.setItem(viewedKey, JSON.stringify(viewed));
-    console.log('Tracked Viewed Recipe:', recipe.title); // Debug log
 }
 
 // Open recipe modal with detailed information (Enhanced with tracking)
-async function openRecipeModal(recipeId) {
-    const recipe = currentRecipes.find(r => r.id === recipeId);
-    if (!recipe) {
-        console.error('Recipe not found in currentRecipes:', recipeId);
-        showError('Recipe details not available. Try searching again.');
-        return;
-    }
-    
-    console.log('Opening Modal for Recipe:', recipe); // Debug log
-    
-    // Track the view immediately
-    trackViewedRecipe(recipe);
-    
-    // Populate modal with recipe data
-    document.getElementById('modalTitle').textContent = recipe.title || 'Untitled Recipe';
-    
-    const modalImageEl = document.getElementById('modalImage');
-    const modalCandidates = [
-        recipe.image,
-        `https://spoonacular.com/recipeImages/${recipe.id}-636x393.jpg`,
-        `https://spoonacular.com/recipeImages/${recipe.id}-480x360.jpg`
-    ].filter(Boolean);
-    loadImageProgressively(modalImageEl, modalCandidates, 'https://via.placeholder.com/400x300?text=Recipe+Image');
-    modalImageEl.alt = recipe.title || 'Recipe Image';
-    
-    document.getElementById('modalTime').textContent = recipe.readyInMinutes || 'N/A';
-    document.getElementById('modalServings').textContent = recipe.servings || 'N/A';
-    document.getElementById('modalDifficulty').textContent = getDifficultyLevel(recipe.readyInMinutes);
-    
-    // Populate ingredients with fallback
-    const ingredientsList = document.getElementById('modalIngredients');
-    if (recipe.extendedIngredients && recipe.extendedIngredients.length > 0) {
-        ingredientsList.innerHTML = recipe.extendedIngredients.map(ingredient => {
-            const imagePath = ingredient.image ? `https://spoonacular.com/cdn/ingredients_100x100/${ingredient.image}` : 'https://via.placeholder.com/60x60?text=Ing';
-            const name = ingredient.original || ingredient.name || 'Unknown ingredient';
-            return `<li><img class="ingredient-thumb" src="${imagePath}" alt="${name}" onerror="this.src='https://via.placeholder.com/60x60?text=Ing'">${name} ${ingredient.amount ? `(${ingredient.amount} ${ingredient.unit || ''})` : ''}</li>`;
-        }).join('');
-    } else {
-        ingredientsList.innerHTML = '<li><em>No ingredients available. Check your API key or try another recipe.</em></li>';
-    }
-    
-    // Populate instructions with fallback
-    const instructionsList = document.getElementById('modalInstructions');
-    if (recipe.analyzedInstructions && recipe.analyzedInstructions.length > 0 && recipe.analyzedInstructions[0].steps) {
-        const steps = recipe.analyzedInstructions[0].steps;
-        instructionsList.innerHTML = steps.map((step, index) => 
-            `<li>${index + 1}. ${step.step || 'Step description missing'}</li>`
-        ).join('');
-    } else if (recipe.instructions) {
-        const instructions = recipe.instructions.replace(/<[^>]*>/g, '');
-        instructionsList.innerHTML = instructions.split('. ').map((instr, index) => 
-            `<li>${index + 1}. ${instr.trim() || 'Instruction missing'}.</li>`
-        ).filter(li => li.trim()).join('');
-    } else {
-        instructionsList.innerHTML = '<li><em>No instructions available. Recipe details may be incomplete.</em></li>';
-    }
-    
-    // Show modal
-    recipeModal.style.display = 'block';
-    document.body.style.overflow = 'hidden';
-}
+
+document.getElementById("logoutBtn")?.addEventListener("click", () => {
+    localStorage.removeItem("authToken");
+    localStorage.removeItem("user");
+    window.location.href = "login.html";
+});
 
 // Close recipe modal
 function closeRecipeModal() {
+    const recipeModal = document.getElementById('recipeModal');
     recipeModal.style.display = 'none';
     document.body.style.overflow = 'auto';
-}
+  }
+  
 
 // Clear all results
 function clearResults() {
@@ -426,21 +455,6 @@ function hideError() {
     if (errorSection) errorSection.style.display = 'none';
 }
 
-// Progressive image loading setup
-function setupProgressiveImageLoading() {
-    const images = document.querySelectorAll('img[data-load-src]');
-    images.forEach(img => {
-        const observer = new IntersectionObserver((entries, observer) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    loadImageProgressively(entry.target, entry.target.dataset.loadSrc.split('|'), 'https://via.placeholder.com/300x200?text=Loading...');
-                    observer.unobserve(entry.target);
-                }
-            });
-        });
-        observer.observe(img);
-    });
-}
 
 // Load image progressively (tries multiple sources)
 // Progressive image loading setup
@@ -507,6 +521,58 @@ function applyBootstrapHelpers() {
     });
 }
 
+async function loginUser(event) {
+    event.preventDefault();
+    const email = document.getElementById("email").value;
+    const password = document.getElementById("password").value;
+  
+    const res = await fetch(`${API_BASE}/auth/login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password }),
+    });
+  
+    const data = await res.json();
+  
+    if (res.ok) {
+      localStorage.setItem("token", data.token);
+      localStorage.setItem("userEmail", email);
+      alert("Login successful!");
+      window.location.href = "index.html";
+    } else {
+      alert(data.message || "Login failed");
+    }
+  }
+  
+  async function submitSignup(event) {
+    event.preventDefault();
+    const name = document.getElementById("name").value;
+    const email = document.getElementById("email").value;
+    const password = document.getElementById("password").value;
+  
+    const res = await fetch(`${API_BASE}/auth/register`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name, email, password }),
+    });
+  
+    const data = await res.json();
+  
+    if (res.ok) {
+      alert("Signup successful!");
+      window.location.href = "login.html";
+    } else {
+      alert(data.message || "Signup failed");
+    }
+  }
+  
+  function logoutUser() {
+    localStorage.removeItem("token");
+    localStorage.removeItem("userEmail");
+    alert("Logged out!");
+    window.location.href = "login.html";
+  }
+  
 // Expose functions globally for HTML onclick handlers (required for inline JS in HTML)
 window.removeIngredient = removeIngredient;
 window.openRecipeModal = openRecipeModal;

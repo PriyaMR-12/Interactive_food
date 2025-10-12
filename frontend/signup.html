@@ -109,7 +109,7 @@
             <p class="auth-subtitle">Join Recipe Finder to discover amazing meals</p>
             <div id="signupError" class="error-msg"></div>
             <div id="signupSuccess" class="success-msg"></div>
-            <form id="signupForm">
+            <form id="signupForm" onsubmit="submitSignup(event)">
                 <div class="form-group">
                     <label for="name">Full Name</label>
                     <input id="name" type="text" class="form-control" placeholder="Enter your full name" autocomplete="name" required>
@@ -129,7 +129,7 @@
                 <button class="auth-btn" type="submit">
                     <i class="fas fa-user-plus"></i> Sign Up
                 </button>
-            </form>
+            </onsubmit=>
             <div class="auth-footer">
                 Already have an account? <a href="login.html">Sign In</a>
             </div>
@@ -143,6 +143,7 @@
             const errorBox = document.getElementById('signupError');
             const successBox = document.getElementById('signupSuccess');
             
+
             form.addEventListener('submit', async function(e){
                 e.preventDefault();
                 hideMessages();
