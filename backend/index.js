@@ -28,20 +28,20 @@ app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true }));
 
 // ✅ Connect DB
-import connectDB from "../config/db.js";
+import connectDB from "./config/db.js";
 connectDB();
 
 // ✅ Load routes *after CORS + JSON parsing*
-import authRoutes from "./routes/authRoutes.js";
+import authRoutes from "./src/routes/authRoutes.js";
 app.use("/api/auth", authRoutes);
 
-import favoriteRoutes from "./routes/favoriteRoutes.js";
+import favoriteRoutes from "./src/routes/favoriteRoutes.js";
 app.use("/api/favorites", favoriteRoutes);
 
-import viewedRoutes from "./routes/viewedRoutes.js";
+import viewedRoutes from "./src/routes/viewedRoutes.js";
 app.use("/api/viewed", viewedRoutes);
 
-import customRecipeRoutes from "./routes/customRecipeRoutes.js";
+import customRecipeRoutes from "./src/routes/customRecipeRoutes.js";
 app.use("/api/custom-recipes", customRecipeRoutes);
 
 // ✅ Test route
@@ -51,4 +51,4 @@ app.get("/", (req, res) => {
 
 // ✅ Start Server
 const PORT = process.env.PORT || 4000;
-app.listen(PORT, () => console.log(`✅ Server running on port ${PORT}`));
+app.listen(PORT, () => console.log(`Server running on PORT ${PORT}`));
